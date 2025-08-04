@@ -4,6 +4,7 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import connectDB from './configs/db.js';
+import authRouter from './routes/authRoutes.js';
 
 dotenv.config();
 
@@ -21,6 +22,8 @@ connectDB();
 app.get('/', (req, res) => {
   res.send('FileFleet Server is running...');
 });
+
+app.use('/api/user',authRouter);
 
 // Start server
 const PORT = process.env.PORT || 5000;

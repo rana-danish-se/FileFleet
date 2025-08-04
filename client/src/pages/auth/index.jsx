@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import SideComponent from './components/sidecomponent';
 import { Eye, EyeOff } from 'lucide-react';
 import OTP from './components/OTP';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { apiClient } from '@/utils/apiClient';
+import { SIGN_IN_ROUTE, SIGN_UP_ROUTE, VERIFY_OTP_ROUTE } from '@/utils/constants';
+import { AppContext } from '@/context/AppContext';
+import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
   const [state, setState] = useState('Login');
@@ -13,16 +18,71 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showOTP, setShowOTP] = useState(false);
+  const [otp, setOtp] = useState(null);
+  const [userId, setuserId] = useState(null);
+  const navigate = useNavigate();
+  const { verifyOTP, setUserInfo } = useContext(AppContext);
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-    if (state === 'Sign Up') {
-      if (!validateSignup()) return;
-      // sign up logic
-    } else {
-      // login logic
+const handleFormSubmit = async (e) => {
+  e.preventDefault();
+  if (state === 'Sign Up') {
+    if (!validateSignup()) return;
+    try {
+      const res = await apiClient.post(SIGN_UP_ROUTE, {
+        name: username,
+        email,
+        password,
+      });
+
+      // Success (201)
+      toast.success(res.data.message);
+      setuserId(res.data.userId);
+      setShowOTP(true);
+      
+    } catch (error) {
+      if (error.response) {
+        const { status, data } = error.response;
+
+        if (status === 401) {
+          setUserInfo(data.user);
+          toast.error('Verify your email');
+          navigate('/verify-email');
+        } else {
+          toast.error(data.message || 'An error occurred');
+        }
+      } else {
+        toast.error(error.message || 'Network error');
+      }
     }
-  };
+  } else {
+       try {
+      const res = await apiClient.post(SIGN_IN_ROUTE, {
+        email,
+        password,
+      });
+
+      toast.success(res.data.message);
+      setUserInfo(res.data.user);
+      navigate('/dashboard')
+      
+    } catch (error) {
+      if (error.response) {
+        const { status, data } = error.response;
+
+        if (status === 401) {
+          setUserInfo(data.user);
+          toast.error(data.message);
+          navigate('/verify-email');
+        } else {
+          toast.error(data.message || 'An error occurred');
+        }
+      } else {
+        toast.error(error.message || 'Network error');
+      }
+    }
+  }
+};
+
 
   const validateSignup = () => {
     if (password !== confirmPassword) {
@@ -30,6 +90,10 @@ const Auth = () => {
       return false;
     }
     return true;
+  };
+
+  const handleVerification = () => {
+    verifyOTP(otp, userId);
   };
 
   const toggleAuthState = () => {
@@ -127,14 +191,17 @@ const Auth = () => {
             )}
             {state === 'Login' && (
               <div className="text-blue-400 w-full md:w-[450px] text-right">
-                <span onClick={()=>setState("Forget Password")} className="cursor-pointer hover:text-white transition-all duration-300">
+                <span
+                  onClick={() => setState('Forget Password')}
+                  className="cursor-pointer hover:text-white transition-all duration-300"
+                >
                   Forgot password?
                 </span>
               </div>
             )}
             <button
               type="submit"
-              className="bg-gray-800 w-full md:w-[450px] p-4 rounded-full hover:bg-gray-700 transition-all"
+              className="bg-gray-800 w-full md:w-[450px] cursor-pointer p-4 rounded-full hover:bg-gray-700 transition-all"
             >
               {state}
             </button>
@@ -187,10 +254,10 @@ const Auth = () => {
               Reset Password
             </Button>
             <Button
-              onClick={()=>setState("Login")}
+              onClick={() => setState('Login')}
               className="bg-gray-800 w-full cursor-pointer md:w-[450px] p-4 rounded-full hover:bg-gray-700 transition-all"
             >
-             Back to Login
+              Back to Login
             </Button>
           </form>
         )}
@@ -199,7 +266,7 @@ const Auth = () => {
       {showOTP && (
         <div className="fixed inset-0 bg-black/70 bg-opacity-60 flex justify-center items-center z-50">
           <div className="rounded-xl shadow-2xl p-6 w-full max-w-md">
-            <OTP />
+            <OTP setOtp={setOtp} verifyOTP={handleVerification} />
           </div>
         </div>
       )}
