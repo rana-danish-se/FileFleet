@@ -8,4 +8,8 @@ export const SIGN_IN_ROUTE=`${AUTH_ROUTE}/login`;
 export const VERIFY_OTP_ROUTE=`${AUTH_ROUTE}/verify-otp`
 export const GET_USER_INFO=`${AUTH_ROUTE}/get-user-info`
 export const VERIFY_EMAIL_ROUTE=`${AUTH_ROUTE}/verify-email`
+export const RESET_PASSWORD_ROUTE=`${AUTH_ROUTE}/reset-password`;
+export const RESET_PASSWORD_OTP_ROUTE=`${AUTH_ROUTE}/verify-password-otp`;
+export const SET_NEW_PASSWORD_ROUTE=`${AUTH_ROUTE}/set-new-password`;
+
 

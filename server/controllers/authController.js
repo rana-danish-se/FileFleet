@@ -17,12 +17,10 @@ export const signupController = async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       if (!existingUser.isVerified) {
-        return res
-          .status(401)
-          .json({
-            message: 'User is registered but not verified.',
-            user: existingUser,
-          });
+        return res.status(401).json({
+          message: 'User is registered but not verified.',
+          user: existingUser,
+        });
       }
       return res.status(409).json({ message: 'User already exists.' });
     }
@@ -222,7 +220,7 @@ export const loginController = async (req, res) => {
     if (!user.isVerified) {
       return res
         .status(401)
-        .json({ message: 'Please verify your email first.' ,user });
+        .json({ message: 'Please verify your email first.', user });
     }
 
     // Compare password
@@ -249,3 +247,117 @@ export const loginController = async (req, res) => {
     res.status(500).json({ message: 'Server error. Please try again later.' });
   }
 };
+
+export const resetPasswordController = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required.' });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    if (!user.isVerified) {
+      return res
+        .status(401)
+        .json({ message: 'Please verify your email first.' });
+    }
+
+    // Generate OTP
+    const otp = generateOTP();
+    const hashedOTP = await bcrypt.hash(otp, 10);
+
+    user.otp = hashedOTP;
+    user.otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await user.save();
+
+    await sendOTPEmail({
+      to: email,
+      subject: 'Your OTP Code - FileFleet',
+      text: `Your OTP is: ${otp}`,
+      html: `<p>Your OTP is: <strong>${otp}</strong></p><p>This code is valid for 15 minutes.</p>`,
+    });
+
+    return res.status(200).json({ message: 'OTP sent successfully to email.' ,userId: user._id});
+  } catch (error) {
+    console.error('Error reseting password:', error);
+    return res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+export const verifyResetPasswordOtpController = async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+
+    if (!userId || !otp) {
+      return res.status(400).json({ message: 'User ID and OTP are required.' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    if (!user.otp || !user.otpExpiresAt) {
+      return res
+        .status(400)
+        .json({ message: 'No OTP found. Please request a new one.' });
+    }
+
+    if (user.otpExpiresAt < new Date()) {
+      return res
+        .status(400)
+        .json({ message: 'OTP has expired. Please request a new one.' });
+    }
+
+    const isOtpValid = await bcrypt.compare(otp, user.otp);
+    if (!isOtpValid) {
+      return res.status(400).json({ message: 'Invalid OTP.' });
+    }
+
+    // OTP is valid, proceed to reset password
+    user.otp = undefined;
+    user.otpExpiresAt = undefined;
+    await user.save();
+
+    return res.status(200).json({
+      message: 'OTP verified successfully.',
+      userId: user._id,
+      email: user.email,
+    });
+  } catch (error) {
+    console.error('Error verifying reset password OTP:', error);
+    return res.status(500).json({ message: 'Internal server error.' });
+  }
+}
+
+export const setNewPasswordController = async (req, res) => {
+  try {
+    const { userId, password } = req.body;
+
+    if (!userId || !password) {
+      return res.status(400).json({ message: 'User ID and new password are required.' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({ message: 'Password reset successfully.' });
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    return res.status(500).json({ message: 'Internal server error.' });
+  }
+}

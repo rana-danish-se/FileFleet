@@ -5,12 +5,17 @@ import OTP from './components/OTP';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { apiClient } from '@/utils/apiClient';
-import { SIGN_IN_ROUTE, SIGN_UP_ROUTE, VERIFY_OTP_ROUTE } from '@/utils/constants';
+import {
+  RESET_PASSWORD_ROUTE,
+  SIGN_IN_ROUTE,
+  SIGN_UP_ROUTE,
+  VERIFY_EMAIL_ROUTE,
+  VERIFY_OTP_ROUTE,
+} from '@/utils/constants';
 import { AppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
-  const [state, setState] = useState('Login');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,70 +24,94 @@ const Auth = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showOTP, setShowOTP] = useState(false);
   const [otp, setOtp] = useState(null);
-  const [userId, setuserId] = useState(null);
+
   const navigate = useNavigate();
-  const { verifyOTP, setUserInfo } = useContext(AppContext);
+  const {
+    verifyOTP,
+    setUserInfo,
+    setToken,
+    state,
+    setState,
+    userId,
+    setuserId,
+  } = useContext(AppContext);
 
-const handleFormSubmit = async (e) => {
-  e.preventDefault();
-  if (state === 'Sign Up') {
-    if (!validateSignup()) return;
-    try {
-      const res = await apiClient.post(SIGN_UP_ROUTE, {
-        name: username,
-        email,
-        password,
-      });
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (state === 'Sign Up') {
+      if (!validateSignup()) return;
+      try {
+        const res = await apiClient.post(SIGN_UP_ROUTE, {
+          name: username,
+          email,
+          password,
+        });
 
-      // Success (201)
-      toast.success(res.data.message);
-      setuserId(res.data.userId);
-      setShowOTP(true);
-      
-    } catch (error) {
-      if (error.response) {
-        const { status, data } = error.response;
+        // Success (201)
+        toast.success(res.data.message);
+        setuserId(res.data.userId);
+        setShowOTP(true);
+      } catch (error) {
+        if (error.response) {
+          const { status, data } = error.response;
 
-        if (status === 401) {
-          setUserInfo(data.user);
-          toast.error('Verify your email');
-          navigate('/verify-email');
+          if (status === 401) {
+            setUserInfo(data.user);
+            toast.error('Verify your email');
+            navigate('/verify-email');
+          } else {
+            toast.error(data.message || 'An error occurred');
+          }
         } else {
-          toast.error(data.message || 'An error occurred');
+          toast.error(error.message || 'Network error');
         }
-      } else {
-        toast.error(error.message || 'Network error');
+      }
+    } else if (state === 'Login') {
+      try {
+        const res = await apiClient.post(SIGN_IN_ROUTE, {
+          email,
+          password,
+        });
+        if (res.status === 200) {
+          toast.success(res.data.message);
+          localStorage.setItem('token', res.data.token);
+          setToken(res.data.token);
+          setUserInfo(res.data.user);
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        if (error.response) {
+          const { status, data } = error.response;
+
+          if (status === 401) {
+            setUserInfo(data.user);
+            toast.error(data.message);
+            navigate('/verify-email');
+          } else {
+            toast.error(data.message || 'An error occurred');
+          }
+        } else {
+          toast.error(error.message || 'Network error');
+        }
+      }
+    } else if (state === 'Forget Password') {
+      try {
+        const res = await apiClient.post(RESET_PASSWORD_ROUTE, {
+          email,
+        });
+        toast.success(res.data.message);
+        setuserId(res.data.userId);
+        navigate('/verify-email');
+      } catch (error) {
+        if (error.response) {
+          const { data } = error.response;
+
+          toast.error(data.message || 'An error occurred');
+          toast.error('Try signing in again.');
+        }
       }
     }
-  } else {
-       try {
-      const res = await apiClient.post(SIGN_IN_ROUTE, {
-        email,
-        password,
-      });
-
-      toast.success(res.data.message);
-      setUserInfo(res.data.user);
-      navigate('/dashboard')
-      
-    } catch (error) {
-      if (error.response) {
-        const { status, data } = error.response;
-
-        if (status === 401) {
-          setUserInfo(data.user);
-          toast.error(data.message);
-          navigate('/verify-email');
-        } else {
-          toast.error(data.message || 'An error occurred');
-        }
-      } else {
-        toast.error(error.message || 'Network error');
-      }
-    }
-  }
-};
-
+  };
 
   const validateSignup = () => {
     if (password !== confirmPassword) {

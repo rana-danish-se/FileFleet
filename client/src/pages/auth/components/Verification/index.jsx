@@ -4,14 +4,18 @@ import React, { useContext, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import Email from '@/assets/Email.png';
 import { apiClient } from '@/utils/apiClient';
-import { VERIFY_EMAIL_ROUTE } from '@/utils/constants';
+import {
+  RESET_PASSWORD_OTP_ROUTE,
+  VERIFY_EMAIL_ROUTE,
+} from '@/utils/constants';
 
 const VerifyEmail = () => {
-  const { userInfo, verifyOTP } = useContext(AppContext);
+  const { userInfo, verifyOTP, state, userId, navigate } =
+    useContext(AppContext);
   // Refs for each of the six inputs
   const inputs = Array.from({ length: 6 }, () => useRef(null));
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const values = inputs.map((ref) => ref.current?.value.trim());
 
     const hasEmpty = values.some((val) => val === '' || val === undefined);
@@ -23,7 +27,27 @@ const VerifyEmail = () => {
     }
 
     const otpValue = values.join('');
-    verifyOTP(otpValue, userInfo._id);
+    console.log(state);
+    if (state !== 'Forget Password') {
+      verifyOTP(otpValue, userInfo._id);
+    } else {
+      try {
+        console.log('userId', userId);
+        const res = await apiClient.post(RESET_PASSWORD_OTP_ROUTE, {
+          otp: otpValue,
+          userId,
+        });
+        if (res.status === 200) {
+          toast.success(res.data.message);
+          navigate('/reset-password');
+        }
+      } catch (error) {
+        const message =
+          error?.response?.data?.message || 'Something went wrong.';
+        toast.error(message);
+        toast.error('Please sign in again.');
+      }
+    }
   };
   useEffect(() => {
     const sendOtp = async () => {
@@ -36,7 +60,9 @@ const VerifyEmail = () => {
         toast.error(error.message);
       }
     };
-    sendOtp();
+    if (state !== 'Forget Password') {
+      sendOtp();
+    }
   }, []);
   // Optional: Auto-focus next input on typing
   const handleChange = (e, index) => {
@@ -54,8 +80,10 @@ const VerifyEmail = () => {
         <img src={Email} className="w-100 h-60" alt="" />
         <p className="text-gray-400 w-full sm:w-120">
           We have sent an OTP to{' '}
-          <strong className="text-white">{userInfo.email}</strong> for
-          verification. Please check your email and enter OTP below
+          <strong className="text-white">
+            {userInfo ? userInfo.email : 'your email'}
+          </strong>{' '}
+          for verification. Please check your email and enter OTP below
         </p>
       </div>
 
