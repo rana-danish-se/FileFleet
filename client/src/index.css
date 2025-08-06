@@ -122,6 +122,7 @@
 
 body{
   font-family: "Outfit";
+  overflow: hidden;
 }
 
 ::-webkit-scrollbar{

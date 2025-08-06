@@ -9,16 +9,17 @@ import DashboardLayout from './layouts/DashbaordLayout';
 import { GET_USER_INFO } from './utils/constants';
 import VerifyEmail from './pages/auth/components/Verification';
 import ResetPassword from './pages/auth/components/ResetPassword';
+import Dashboard from './pages/dashboard';
 
 const PrivateRoute = ({ children }) => {
-  const { token ,userInfo} = useContext(AppContext);
+  const { token, userInfo } = useContext(AppContext);
   const isAuthenticated = !!token;
 
   if (!isAuthenticated) {
     return <Navigate to="/auth" />;
   }
-  if(userInfo&&!userInfo.isVerified){
-       return <Navigate to="/verify-email" />;
+  if (userInfo && !userInfo.isVerified) {
+    return <Navigate to="/verify-email" />;
   }
   return children;
 };
@@ -30,10 +31,6 @@ const AuthRoute = ({ children }) => {
 };
 
 function App() {
-
-
-
-
   return (
     <Routes>
       <Route
@@ -51,7 +48,7 @@ function App() {
         element={
           <PrivateRoute>
             <DashboardLayout>
-              <div>Dashboard</div>
+              <Dashboard />
             </DashboardLayout>
           </PrivateRoute>
         }
