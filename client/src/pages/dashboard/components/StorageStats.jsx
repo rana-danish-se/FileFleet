@@ -1,7 +1,47 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 const StorageStats = ({ used, total }) => {
-  const percentageUsed = Math.round((used / total) * 100);
+  // Convert formatted string (e.g., "1.08 MB") to bytes
+  const parseSizeToBytes = (sizeStr) => {
+    if (!sizeStr) return 0;
+    const [value, unit] = sizeStr.split(" ");
+    const num = parseFloat(value);
+
+    switch (unit) {
+      case "GB":
+        return num * 1024 * 1024 * 1024;
+      case "MB":
+        return num * 1024 * 1024;
+      case "KB":
+        return num * 1024;
+      default:
+        return num;
+    }
+  };
+
+  // Convert bytes back into human-readable string
+  const formatBytes = (bytes) => {
+    if (bytes >= 1024 * 1024 * 1024) {
+      return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+    } else if (bytes >= 1024 * 1024) {
+      return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    } else if (bytes >= 1024) {
+      return (bytes / 1024).toFixed(2) + " KB";
+    } else {
+      return bytes + " B";
+    }
+  };
+useEffect(()=>{
+  console.log(`Used: ${used}, Total: ${total}`);
+}, [used, total]);
+
+  const usedBytes = parseSizeToBytes(used);
+  const totalBytes = parseSizeToBytes(total);
+
+  const percentageUsed = totalBytes
+    ? Math.round((usedBytes / totalBytes) * 100)
+    : 0;
+
   const radius = 70;
   const stroke = 12;
   const normalizedRadius = radius - stroke * 0.5;
@@ -27,7 +67,7 @@ const StorageStats = ({ used, total }) => {
             fill="transparent"
             strokeWidth={stroke}
             strokeLinecap="round"
-            strokeDasharray={circumference + " " + circumference}
+            strokeDasharray={`${circumference} ${circumference}`}
             strokeDashoffset={strokeDashoffset}
             r={normalizedRadius}
             cx={radius}
@@ -44,7 +84,9 @@ const StorageStats = ({ used, total }) => {
       {/* Text Info */}
       <div className="ml-6">
         <p className="text-lg font-semibold">Available Storage</p>
-        <p className="text-md">{`${used}GB / ${total}GB`}</p>
+        <p className="text-md">
+          {formatBytes(usedBytes)} / {formatBytes(totalBytes)}
+        </p>
       </div>
     </div>
   );

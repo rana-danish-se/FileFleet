@@ -41,6 +41,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    usedStorage: {
+      type: Number,
+      default: 0, // in bytes
+    },
   },
   { timestamps: true }
 );

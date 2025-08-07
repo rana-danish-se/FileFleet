@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import connectDB from './configs/db.js';
 import authRouter from './routes/authRoutes.js';
+import fileRouter from './routes/fileRoutes.js';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/user',authRouter);
+app.use('/api/files',fileRouter);
 
 // Start server
 const PORT = process.env.PORT || 5000;
