@@ -1,6 +1,6 @@
-import File from '../models/fileModel.js';
+import File from '../models/FileModel.js';
 import getCategory from '../utils/getCategory.js';
-import User from '../models/userModel.js';
+import User from '../models/UserModel.js';
 import { formatBytesToGB, formatBytesToMB, MAX_STORAGE_BYTES } from '../configs/constants.js';
 import { format } from 'date-fns'; 
 import { getFilesByCategory } from '../utils/fileHelpers.js';
