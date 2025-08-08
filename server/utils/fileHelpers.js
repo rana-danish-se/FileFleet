@@ -1,4 +1,4 @@
-import File from '../models/fileModel.js';
+import File from '../models/FileModel.js';
 import { formatBytesToMB } from './formatStorage.js';
 
 export const getFilesByCategory = async (userId, categories) => {
