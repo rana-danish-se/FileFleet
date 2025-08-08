@@ -15,6 +15,10 @@ export const SET_NEW_PASSWORD_ROUTE=`${AUTH_ROUTE}/set-new-password`;
 
 export const UPLOAD_FILES_ROUTE=`${FILES_ROUTE}/upload`;
 export const GET_DASHBOARD_ROUTE=`${FILES_ROUTE}/get-dashboard`;
+export const GET_DOCUMENTS_ROUTE=`${FILES_ROUTE}/documents`;
+export const GET_IMAGES_ROUTE=`${FILES_ROUTE}/images`;
+export const GET_MEDIA_ROUTE=`${FILES_ROUTE}/media`;
+export const GET_OTHERS_ROUTE=`${FILES_ROUTE}/others`;
 
 
 

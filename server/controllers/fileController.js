@@ -3,6 +3,7 @@ import getCategory from '../utils/getCategory.js';
 import User from '../models/userModel.js';
 import { formatBytesToGB, formatBytesToMB, MAX_STORAGE_BYTES } from '../configs/constants.js';
 import { format } from 'date-fns'; 
+import { getFilesByCategory } from '../utils/fileHelpers.js';
 
 
 export const uploadFilesController = async (req, res) => {
@@ -125,3 +126,52 @@ export const getStorageSummaryController = async (req, res) => {
   }
 };
 
+
+
+export const getDocumentsController = async (req, res) => {
+  try {
+    const { files, totalSize } = await getFilesByCategory(req.userId, 'document');
+    res.status(200).json({ success: true, files, totalSize });
+  } catch (error) {
+    console.error('Error fetching documents:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch documents' });
+  }
+};
+
+export const getImagesController = async (req, res) => {
+  try {
+    const { files, totalSize } = await getFilesByCategory(req.userId, 'image');
+    res.status(200).json({ success: true, files, totalSize });
+  } catch (error) {
+    console.error('Error fetching images:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch images' });
+  }
+};
+
+export const getVideosAudiosController = async (req, res) => {
+  try {
+    const { files, totalSize } = await getFilesByCategory(req.userId, ['video', 'audio']);
+    res.status(200).json({ success: true, files, totalSize });
+  } catch (error) {
+    console.error('Error fetching videos/audios:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch videos and audios' });
+  }
+};
+
+export const getOthersController = async (req, res) => {
+  try {
+    const knownCategories = ['document', 'image', 'video', 'audio'];
+    const files = await File.find({
+      owner: req.userId,
+      category: { $nin: knownCategories },
+    }).sort({ createdAt: -1 });
+
+    const totalSizeBytes = files.reduce((acc, file) => acc + file.size, 0);
+    const totalSize = formatBytesToMB(totalSizeBytes);
+
+    res.status(200).json({ success: true, files, totalSize });
+  } catch (error) {
+    console.error('Error fetching others:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch other files' });
+  }
+};

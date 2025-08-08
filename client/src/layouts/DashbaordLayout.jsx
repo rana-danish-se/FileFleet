@@ -4,10 +4,11 @@ import { AppContext } from '@/context/AppContext';
 import { apiClient } from '@/utils/apiClient';
 import { GET_USER_INFO } from '@/utils/constants';
 import { useContext, useEffect } from 'react';
+import { Outlet } from 'react-router-dom'; // ✅ Import this
 
-// layouts/DashboardLayout.jsx
-const DashboardLayout = ({ children }) => {
+const DashboardLayout = () => {
   const { setUserInfo, token } = useContext(AppContext);
+
   useEffect(() => {
     const getUserInfo = async () => {
       if (!token) return;
@@ -29,14 +30,15 @@ const DashboardLayout = ({ children }) => {
 
     getUserInfo();
   }, [token]);
+
   return (
-    <div className="flex h-[100vh] w-screen bg-gray-950 text-white">
+    <div className="flex h-screen w-[100vw] bg-gray-950 text-white">
       <Sidebar />
       <div className="flex flex-col w-full">
         <Navbar />
-        <div className="w-full h-full p-2">
-          <div className="w-full h-full bg-gray-800 rounded-lg ">
-            {children}
+        <div className="w-full   overflow-scroll bg-gray-800">
+          <div className="w-full min-h-screen  bg-gray-800 rounded-lg">
+            <Outlet /> {/* ✅ This replaces {children} */}
           </div>
         </div>
       </div>

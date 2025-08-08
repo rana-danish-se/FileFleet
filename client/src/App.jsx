@@ -1,15 +1,18 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Auth from './pages/auth';
-
 import { useContext } from 'react';
 import { AppContext } from './context/AppContext';
-
 import DashboardLayout from './layouts/DashbaordLayout';
 
-import { GET_USER_INFO } from './utils/constants';
 import VerifyEmail from './pages/auth/components/Verification';
 import ResetPassword from './pages/auth/components/ResetPassword';
 import Dashboard from './pages/dashboard';
+import Documents from './pages/dashboard/documents';
+import Images from './pages/dashboard/images';
+import Media from './pages/dashboard/media';
+import Others from './pages/dashboard/others';
+
+// Import new category pages
 
 const PrivateRoute = ({ children }) => {
   const { token, userInfo } = useContext(AppContext);
@@ -43,16 +46,23 @@ function App() {
       />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* Nested routes inside DashboardLayout */}
       <Route
         path="/dashboard"
         element={
           <PrivateRoute>
-            <DashboardLayout>
-              <Dashboard />
-            </DashboardLayout>
+            <DashboardLayout />
           </PrivateRoute>
         }
-      />
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="documents" element={<Documents />} />
+        <Route path="images" element={<Images />} />
+        <Route path="media" element={<Media />} />
+          <Route path="others" element={<Others />} />
+      </Route>
+
       <Route path="*" element={<Navigate to="/auth" />} />
     </Routes>
   );

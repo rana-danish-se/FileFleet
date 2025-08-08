@@ -1,5 +1,12 @@
 import express from 'express';
-import { getStorageSummaryController, uploadFilesController } from '../controllers/fileController.js';
+import {
+  getStorageSummaryController,
+  uploadFilesController,
+  getDocumentsController,
+  getImagesController,
+  getVideosAudiosController,
+  getOthersController,
+} from '../controllers/fileController.js';
 
 import upload from '../middlewares/multer.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
@@ -31,10 +38,14 @@ fileRouter.post(
       next(); // Proceed to controller
     });
   },
-  
+
   uploadFilesController
 );
 
-fileRouter.get("/get-dashboard",verifyToken,getStorageSummaryController)
+fileRouter.get('/get-dashboard', verifyToken, getStorageSummaryController);
+fileRouter.get('/documents', verifyToken, getDocumentsController);
+fileRouter.get('/images', verifyToken, getImagesController);
+fileRouter.get('/media', verifyToken, getVideosAudiosController);
+fileRouter.get('/others', verifyToken, getOthersController);
 
 export default fileRouter;

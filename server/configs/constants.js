@@ -12,3 +12,4 @@ export const formatBytesToMB = (bytes, decimals = 2) => {
   const mb = bytes / (1024 ** 2);
   return `${mb.toFixed(decimals)} MB`;
 };
+

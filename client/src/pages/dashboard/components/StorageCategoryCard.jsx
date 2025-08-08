@@ -3,7 +3,7 @@ import sekeleton from '@/assets/Union.svg';
 
 const StorageCategoryCard = ({ icon, storage, category, lastUpdated }) => {
   return (
-    <div className="w-55 relative z-10 rounded-2xl mt-10 shadow-md   text-black">
+    <div className="w-45 relative z-10 rounded-2xl mt-5 shadow-md   text-black">
       <img src={sekeleton} alt="" className="absolute top-0 w-full right-0 " />
       <img src={icon} alt="" className="w-[67px] h-[72px] absolute -top-4 -left-2" />
       <div className="flex justify-end  px-2 py-2  z-10">
