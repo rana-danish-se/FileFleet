@@ -53,10 +53,10 @@ const Documents = () => {
       </div>
 
       <div className="w-full h-full mt-10 flex flex-wrap justify-center gap-6">
-        {filteredResults.length === 0 ? (
+        {filteredResults?.length === 0 ? (
           <p className="text-gray-500">No documents found.</p>
         ) : (
-          filteredResults.map((doc, index) => (
+          filteredResults?.map((doc, index) => (
             <File
               key={index}
               name={doc.name}
