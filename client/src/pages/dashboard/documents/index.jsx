@@ -16,17 +16,18 @@ const Documents = () => {
       setLoading(false);
     };
     fetchDocs();
+    console.log(documents)
   }, []);
 
   return loading || !documents ? (
-    <div className="w-full h-screen flex items-center justify-center">
+    <div className="w-full  flex items-center justify-center">
       <img src={loader} alt="Loading..." />
     </div>
   ) : (
-    <div className="w-full p-5 overflow-scroll">
+    <div className="w-full min-h-screen p-5 overflow-scroll">
       <Header category="Documents" size={docsSize} />
 
-      <div className="w-full mt-10 flex flex-wrap justify-center gap-6">
+      <div className="w-full h-full  mt-10 flex flex-wrap justify-center gap-6">
         {documents.length === 0 ? (
           <p className="text-gray-500">No documents found.</p>
         ) : (
@@ -37,6 +38,7 @@ const Documents = () => {
               createdAt={doc.createdAt}
               type={doc.type}
               size={doc.size}
+              fileUrl={doc.url}
               imageUrl={null}
             />
           ))

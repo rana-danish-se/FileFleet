@@ -115,7 +115,7 @@ export const formatDateTime = (isoString) => {
   return `${time}, ${day} ${month}`;
 };
 
-const mimeToExt = {
+export const mimeToExt = {
   'application/pdf': 'pdf',
   'application/msword': 'doc',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
@@ -140,7 +140,7 @@ const mimeToExt = {
   'audio/flac': 'flac',
   'audio/ogg': 'ogg',
   'audio/x-ms-wma': 'wma',
- 'audio/x-m4a': 'm4a',
+  'audio/x-m4a': 'm4a',
   'audio/mp4': 'm4a',
   'audio/aiff': 'aiff',
   'audio/alac': 'alac',

@@ -42,6 +42,7 @@ const Media = () => {
             type={med.type}
             size={med.size}
             category={med.category}
+            fileUrl={med.url}
             imageUrl={null}
           />
         ))}

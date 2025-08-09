@@ -29,7 +29,7 @@ const Others = () => {
       <img src={loader} alt="Loading..." />
     </div>
   ) : (
-    <div className="w-full p-5 overflow-scroll">
+    <div className="w-full min-h-screen p-5 overflow-scroll">
       <Header category="Others" size={othersSize} />
       <div className="w-full mt-10 flex flex-wrap justify-center  gap-6">
         {others.length === 0 && (
@@ -42,6 +42,7 @@ const Others = () => {
             createdAt={other.createdAt}
             type={other.type}
             size={other.size}
+            fileUrl={other.url}
             category={other.category}
             imageUrl={null}
           />
