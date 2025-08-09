@@ -4,9 +4,9 @@ import upload from '@/assets/assets/icons/upload.svg';
 import logout from '@/assets/assets/icons/logout.svg';
 import { AppContext } from '@/context/AppContext';
 
-
 const Navbar = () => {
-  const { token, setToken, setUserInfo,handleFileChange } = useContext(AppContext);
+  const { token, setToken, setUserInfo, handleFileChange } =
+    useContext(AppContext);
   const fileRef = useRef(null);
 
   const handleLogOut = () => {
@@ -20,21 +20,9 @@ const Navbar = () => {
     fileRef.current.click();
   };
 
-
-
-
-
   return (
-    <div className="p-3 sm:ml-13 flex items-center justify-between">
-      <div className="bg-gray-900 gap-2 sm:flex items-center justify-between px-4 py-2 rounded-full">
-        <img src={search} alt="" />
-        <input
-          type="text"
-          className="flex flex-1 border-none outline-none"
-          placeholder="Search for file"
-        />
-      </div>
-
+    <div className="p-3 sm:ml-13 flex items-center justify-end">
+      
       <div className="flex items-center gap-4 cursor-pointer">
         <button
           onClick={handleUploadButtonClick}

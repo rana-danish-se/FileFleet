@@ -16,8 +16,8 @@ import { toast } from 'sonner';
 export const AppContext = createContext();
 
 const AppContextProvider = ({ children }) => {
-    const [others, setOthers] = useState(null);
-    const [othersSize, setOthersSize] = useState(null);
+  const [others, setOthers] = useState(null);
+  const [othersSize, setOthersSize] = useState(null);
   const [media, setMedia] = useState(null);
   const [mediaSize, setMediaSize] = useState(null);
   const [images, setImages] = useState(null);
@@ -116,9 +116,15 @@ const AppContextProvider = ({ children }) => {
       const res = await apiClient.get(GET_DASHBOARD_ROUTE, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setdashboardData(res.data.summary);
+      if (res.status === 200) {
+        setdashboardData(res.data.summary);
+      } else {
+        toast.error(res.data.message || 'Failed to fetch dashboard data');
+        navigate('/auth');
+      }
     } catch (error) {
-      toast.error('Failed to fetch dashboard data');
+       toast.error(error.res.data.message || 'Failed to fetch dashboard data');
+      navigate('/auth');
       console.error('Dashboard data fetch error:', error);
     }
   };
@@ -172,21 +178,21 @@ const AppContextProvider = ({ children }) => {
     }
   };
 
-     const getOthers = async () => {
-      try {
-        const res = await apiClient.get(GET_OTHERS_ROUTE, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.status === 200) {
-          setOthers(res.data.files);
-          setOthersSize(res.data.totalSize);
-        }
-      } catch (error) {
-        toast.error('Failed to fetch documents');
+  const getOthers = async () => {
+    try {
+      const res = await apiClient.get(GET_OTHERS_ROUTE, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.status === 200) {
+        setOthers(res.data.files);
+        setOthersSize(res.data.totalSize);
       }
-    };
+    } catch (error) {
+      toast.error('Failed to fetch documents');
+    }
+  };
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -201,9 +207,9 @@ const AppContextProvider = ({ children }) => {
       getDocs();
     } else if (location.pathname === '/dashboard/images') {
       getImages();
-    }else if (location.pathname === '/dashboard/media') {
+    } else if (location.pathname === '/dashboard/media') {
       getMedia();
-    }else if (location.pathname === '/dashboard/others') {
+    } else if (location.pathname === '/dashboard/others') {
       getOthers();
     }
   };
@@ -238,7 +244,7 @@ const AppContextProvider = ({ children }) => {
     mediaSize,
     getOthers,
     others,
-    othersSize
+    othersSize,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
