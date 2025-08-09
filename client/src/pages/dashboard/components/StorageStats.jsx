@@ -31,9 +31,6 @@ const StorageStats = ({ used, total }) => {
       return bytes + " B";
     }
   };
-useEffect(()=>{
-  console.log(`Used: ${used}, Total: ${total}`);
-}, [used, total]);
 
   const usedBytes = parseSizeToBytes(used);
   const totalBytes = parseSizeToBytes(total);

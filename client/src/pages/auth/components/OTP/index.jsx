@@ -1,12 +1,15 @@
-import React, { useRef } from 'react';
+import React, { useRef , useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import loader from "@/assets/assets/icons/loader-brand.svg"
 
-const OTP = ({ setOtp, verifyOTP }) => {
+const OTP = ({ setOtp, handleVerification }) => {
   // Refs for each of the six inputs
   const inputs = Array.from({ length: 6 }, () => useRef(null));
+  const [loading, setLoading] = useState(false)
 
 const handleVerify = () => {
+  setLoading(true);
   const values = inputs.map(ref => ref.current?.value.trim());
 
   const hasEmpty = values.some(val => val === '' || val === undefined);
@@ -19,7 +22,8 @@ const handleVerify = () => {
 
   const otpValue = values.join('');
   setOtp(otpValue);
-  verifyOTP();
+  handleVerification(otpValue);
+  setLoading(false);
 };
 
 
@@ -70,8 +74,10 @@ const handleVerify = () => {
         </div>
       </div>
 
-      <Button onClick={handleVerify} className="mt-8 w-full max-w-xs cursor-pointer">
-        Verify OTP
+      <Button onClick={handleVerify} className="mt-8 w-full flex gap-2 max-w-xs cursor-pointer">
+       {
+        loading && <img src={loader} className='w-6 h-6 mr-2' alt="Loading" />
+       }  Verify OTP
       </Button>
     </div>
   );

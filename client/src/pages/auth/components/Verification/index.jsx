@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { AppContext } from '@/context/AppContext';
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import Email from '@/assets/Email.png';
 import { apiClient } from '@/utils/apiClient';
@@ -12,10 +12,12 @@ import {
 const VerifyEmail = () => {
   const { userInfo, verifyOTP, state, userId, navigate } =
     useContext(AppContext);
+  const [loading, setloading] = useState(false)
   // Refs for each of the six inputs
   const inputs = Array.from({ length: 6 }, () => useRef(null));
 
   const handleVerify = async () => {
+    setloading(true);
     const values = inputs.map((ref) => ref.current?.value.trim());
 
     const hasEmpty = values.some((val) => val === '' || val === undefined);
@@ -27,24 +29,29 @@ const VerifyEmail = () => {
     }
 
     const otpValue = values.join('');
-    console.log(state);
     if (state !== 'Forget Password') {
       verifyOTP(otpValue, userInfo._id);
+      setloading(false);
     } else {
       try {
-        console.log('userId', userId);
+
         const res = await apiClient.post(RESET_PASSWORD_OTP_ROUTE, {
           otp: otpValue,
           userId,
         });
         if (res.status === 200) {
           toast.success(res.data.message);
+          setloading(false);
           navigate('/reset-password');
+        }else{
+          toast.error(res.data.message);
+          setloading(false);
         }
       } catch (error) {
         const message =
-          error?.response?.data?.message || 'Something went wrong.';
+        error?.response?.data?.message || 'Something went wrong.';
         toast.error(message);
+        setloading(false);
         toast.error('Please sign in again.');
       }
     }
@@ -123,7 +130,9 @@ const VerifyEmail = () => {
         onClick={handleVerify}
         className="mt-8 w-full max-w-xs bg-gray-900 cursor-pointer"
       >
-        Verify OTP
+        {
+          loading ? 'Verifying...' : 'Verify OTP'
+        }
       </Button>
     </div>
   );

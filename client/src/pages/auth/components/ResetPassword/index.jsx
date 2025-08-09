@@ -4,6 +4,7 @@ import { AppContext } from '@/context/AppContext';
 import { toast } from 'sonner';
 import { apiClient } from '@/utils/apiClient';
 import { SET_NEW_PASSWORD_ROUTE } from '@/utils/constants';
+import loader from "@/assets/assets/icons/loader-brand.svg";  
 
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -11,6 +12,7 @@ const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const { userId, navigate } = useContext(AppContext);
+  const [loading, setloading] = useState(false)
 
   const handleResetPassword = async () => {
     if (password !== confirmPassword) {
@@ -19,6 +21,7 @@ const ResetPassword = () => {
     }
 
     try {
+      setloading(true);
       const res = await apiClient.post(SET_NEW_PASSWORD_ROUTE, {
         userId,
         password,
@@ -26,6 +29,7 @@ const ResetPassword = () => {
       if (res.status === 200) {
         toast.success('Password reset successfully!');
         toast.success('You can now login with your new password.');
+        setloading(false);
         navigate('/login');
       }
     } catch (error) {
@@ -33,6 +37,7 @@ const ResetPassword = () => {
       toast.error(
         message || 'An error occurred while resetting your password.'
       );
+      setloading(false);
     }
   };
 
@@ -78,8 +83,10 @@ const ResetPassword = () => {
 
       <button
         onClick={handleResetPassword}
-        className="p-4 rounded-xl bg-gray-900 w-full sm:w-[350px] cursor-pointer"
+        disabled={loading}
+        className="p-4 rounded-xl bg-gray-900 w-full flex gap-4 items-center justify-center sm:w-[350px] cursor-pointer"
       >
+        {loading && <img src={loader} className='w-6 h-6 mr-2' alt="Loading" />}
         Reset Password
       </button>
     </div>

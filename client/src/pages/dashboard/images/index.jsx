@@ -1,50 +1,51 @@
 import File from '@/components/File';
 import Header from '@/components/Header';
 import { AppContext } from '@/context/AppContext';
-import { apiClient } from '@/utils/apiClient';
-import { GET_IMAGES_ROUTE } from '@/utils/constants';
+import loader from '@/assets/assets/icons/loader.svg';
 import React, { useContext, useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 const Images = () => {
-  const { token } = useContext(AppContext);
-  const [images, setImages] = useState(null);
-  const [size, setSize] = useState(null);
+  const { images, getImages, imageSize } = useContext(AppContext);
+  const [loading, setLoading] = useState(false);
+  
+
   useEffect(() => {
-    const getImages = async () => {
+    const fetchData = async () => {
       try {
-        const res = await apiClient.get(GET_IMAGES_ROUTE, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.status === 200) {
-          console.log(res.data);
-          setImages(res.data.files);
-          setSize(res.data.totalSize);
-        }
+        setLoading(true);
+        await getImages();
+        setLoading(false);
       } catch (error) {
-        toast.error('Failed to fetch images');
+        console.error('Error fetching images:', error);
+        setLoading;
       }
     };
+
     document.title = 'Images - FileFleet';
-    getImages();
+    fetchData();
   }, []);
-  return (
+  return loading || !images ? (
+    <div className="flex justify-center items-center h-screen">
+      <img src={loader} alt="" />
+    </div>
+  ) : (
     <div className='className="w-full  p-5 overflow-scroll"'>
-      <Header category="Images" size={size} />
-        <div className="mt-10 flex flex-wrap justify-center gap-6">{
-        images?.map((image,index)=>(
+      <Header category="Images" size={imageSize} />
+      <div className="mt-10 flex flex-wrap justify-center gap-6">
+        {images.length === 0 && (
+          <p className="text-gray-500">No images found.</p>
+        )}
+        {images?.map((image, index) => (
           <File
             key={index}
             name={image.name}
             createdAt={image.createdAt}
             type={null}
             size={image.size}
-            imageUrl={image.url}/>
-        ))
-        
-        }</div>
+            imageUrl={image.url}
+          />
+        ))}
+      </div>
     </div>
   );
 };

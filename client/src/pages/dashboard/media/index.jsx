@@ -1,39 +1,39 @@
 import File from '@/components/File';
 import Header from '@/components/Header';
 import { AppContext } from '@/context/AppContext';
-import { apiClient } from '@/utils/apiClient';
-import { GET_MEDIA_ROUTE } from '@/utils/constants';
 import React, { useContext, useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import loader from '@/assets/assets/icons/loader.svg';
 
 const Media = () => {
-  const { token } = useContext(AppContext);
-  const [media, setMedia] = useState(null);
-  const [size, setSize] = useState(null);
+  const { getMedia, mediaSize, media } = useContext(AppContext);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    const getDocs = async () => {
+    const fetchMedia = async () => {
       try {
-        const res = await apiClient.get(GET_MEDIA_ROUTE, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.status === 200) {
-          console.log(res.data);
-          setMedia(res.data.files);
-          setSize(res.data.totalSize);
-        }
+        setLoading(true);
+        await getMedia();
+        setLoading(false);
       } catch (error) {
-        toast.error('Failed to fetch documents');
+        console.error('Error fetching media:', error);
+        setLoading(false);
       }
     };
+
     document.title = 'Media - FileFleet';
-    getDocs();
+    fetchMedia();
   }, []);
-  return (
+  return loading || !media ? (
+    <div className="flex justify-center items-center h-screen">
+      <img src={loader} alt="" />
+    </div>
+  ) : (
     <div className="w-full p-5 overflow-scroll">
-      <Header category="Media" size={size} />
+      <Header category="Media" size={mediaSize} />
       <div className="w-full mt-10 flex flex-wrap justify-center  gap-6">
+        {media.length === 0 && (
+          <p className="text-gray-500">No media files found.</p>
+        )}
         {media?.map((med, index) => (
           <File
             key={index}

@@ -111,15 +111,11 @@ export const verifyOtpController = async (req, res) => {
     user.otp = undefined;
     user.otpExpiresAt = undefined;
     await user.save();
-
-    // ✅ Generate JWT token
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' } // you can choose expiry
+      { expiresIn: '7d' } 
     );
-
-    // ✅ Respond with token and user info
     return res.status(200).json({
       message: 'Email verified successfully.',
       token,

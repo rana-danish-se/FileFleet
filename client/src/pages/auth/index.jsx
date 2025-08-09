@@ -5,12 +5,11 @@ import OTP from './components/OTP';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { apiClient } from '@/utils/apiClient';
+import loader from "@/assets/assets/icons/loader-brand.svg"
 import {
   RESET_PASSWORD_ROUTE,
   SIGN_IN_ROUTE,
   SIGN_UP_ROUTE,
-  VERIFY_EMAIL_ROUTE,
-  VERIFY_OTP_ROUTE,
 } from '@/utils/constants';
 import { AppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +23,7 @@ const Auth = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showOTP, setShowOTP] = useState(false);
   const [otp, setOtp] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
   const {
@@ -39,6 +39,7 @@ const Auth = () => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (state === 'Sign Up') {
+      setLoading(true);
       if (!validateSignup()) return;
       try {
         const res = await apiClient.post(SIGN_UP_ROUTE, {
@@ -50,6 +51,7 @@ const Auth = () => {
         // Success (201)
         toast.success(res.data.message);
         setuserId(res.data.userId);
+        setLoading(false);
         setShowOTP(true);
       } catch (error) {
         if (error.response) {
@@ -58,16 +60,20 @@ const Auth = () => {
           if (status === 401) {
             setUserInfo(data.user);
             toast.error('Verify your email');
+            setLoading(false);
             navigate('/verify-email');
           } else {
             toast.error(data.message || 'An error occurred');
+            setLoading(false);
           }
         } else {
           toast.error(error.message || 'Network error');
+          setLoading(false);
         }
       }
     } else if (state === 'Login') {
       try {
+        setLoading(true);
         const res = await apiClient.post(SIGN_IN_ROUTE, {
           email,
           password,
@@ -77,6 +83,7 @@ const Auth = () => {
           localStorage.setItem('token', res.data.token);
           setToken(res.data.token);
           setUserInfo(res.data.user);
+          setLoading(false);
           navigate('/dashboard');
         }
       } catch (error) {
@@ -86,21 +93,27 @@ const Auth = () => {
           if (status === 401) {
             setUserInfo(data.user);
             toast.error(data.message);
+            setLoading(false);
             navigate('/verify-email');
           } else {
             toast.error(data.message || 'An error occurred');
+            setLoading(false);
           }
         } else {
           toast.error(error.message || 'Network error');
+          setLoading(false);
         }
       }
     } else if (state === 'Forget Password') {
       try {
+        setLoading(true);
         const res = await apiClient.post(RESET_PASSWORD_ROUTE, {
           email,
         });
         toast.success(res.data.message);
         setuserId(res.data.userId);
+        setLoading(false);
+        setState("Login");
         navigate('/verify-email');
       } catch (error) {
         if (error.response) {
@@ -108,6 +121,8 @@ const Auth = () => {
 
           toast.error(data.message || 'An error occurred');
           toast.error('Try signing in again.');
+          setLoading(false);
+          setState('Login');
         }
       }
     }
@@ -115,15 +130,17 @@ const Auth = () => {
 
   const validateSignup = () => {
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      toast.error('Passwords do not match');
+      setLoading(false);
       return false;
     }
     return true;
   };
 
-  const handleVerification = () => {
-    verifyOTP(otp, userId);
-  };
+const handleVerification = (otpToVerify) => {
+  console.log({ otp: otpToVerify, userId });
+  verifyOTP(otpToVerify, userId);
+};
 
   const toggleAuthState = () => {
     setState((prev) => (prev === 'Login' ? 'Sign Up' : 'Login'));
@@ -230,9 +247,10 @@ const Auth = () => {
             )}
             <button
               type="submit"
-              className="bg-gray-800 w-full md:w-[450px] cursor-pointer p-4 rounded-full hover:bg-gray-700 transition-all"
+              disabled={loading}
+              className="bg-gray-800 flex gap-4 justify-center items-center w-full md:w-[450px] cursor-pointer p-4 rounded-full hover:bg-gray-700 transition-all"
             >
-              {state}
+                {loading && <img className='w-6 h-6' src={loader} alt="" />}   {state}
             </button>
             <div className="w-full mt-3 text-center text-neutral-600 text-lg md:w-[450px]">
               {state === 'Login' ? (
@@ -278,9 +296,10 @@ const Auth = () => {
 
             <Button
               type="submit"
-              className="bg-gray-800 w-full cursor-pointer md:w-[450px] p-4 rounded-full hover:bg-gray-700 transition-all"
+              disabled={loading}
+              className="bg-gray-800 flex gap-2 w-full justify-center items-center cursor-pointer md:w-[450px] p-4 rounded-full hover:bg-gray-700 transition-all"
             >
-              Reset Password
+                 {loading && <img src={loader} className='w-6 h-6'/>}Reset Password
             </Button>
             <Button
               onClick={() => setState('Login')}
@@ -295,7 +314,7 @@ const Auth = () => {
       {showOTP && (
         <div className="fixed inset-0 bg-black/70 bg-opacity-60 flex justify-center items-center z-50">
           <div className="rounded-xl shadow-2xl p-6 w-full max-w-md">
-            <OTP setOtp={setOtp} verifyOTP={handleVerification} />
+            <OTP setOtp={setOtp} handleVerification={handleVerification} />
           </div>
         </div>
       )}

@@ -5,37 +5,28 @@ import document from '@/assets/assets/icons/file-document.svg';
 import images from '@/assets/assets/icons/file-image.svg';
 import other from '@/assets/assets/icons/file-other.svg';
 import StorageCategoryCard from './components/StorageCategoryCard';
-import { apiClient } from '@/utils/apiClient';
-import { GET_DASHBOARD_ROUTE } from '@/utils/constants';
+import loader from '@/assets/assets/icons/loader.svg';
+
 import { AppContext } from '@/context/AppContext';
 import RecentlyUploaded from './components/RecentlyUploaded';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+
 
 const Dashboard = () => {
-  const { token } = useContext(AppContext);
-   const navigate = useNavigate(); // ✅ correct navigation function
-  const [dashboardData, setdashboardData] = useState(null);
+  const {dashboardData,getDashboardData } = useContext(AppContext);
+  const [loading, setloading] = useState(false)
   useEffect(() => {
-    const getDashboardData = async () => {
-      try {
-        const res = await apiClient.get(GET_DASHBOARD_ROUTE, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log(res.data);
-        setdashboardData(res.data.summary);
-      } catch (error) {
-        toast.error('Failed to fetch dashboard data');
-        console.error('Dashboard data fetch error:', error);
-      }
-    };
-    // document.title= 'Dashboard - FileFleet';
+    setloading(true)
     getDashboardData();
+    setloading(false)
   }, []);
-  return (
+  return loading || !dashboardData ?(
+    <div className="flex justify-center items-center h-screen">
+       <img src={loader} className='w-15 h-15' alt="" />
+    </div>
+  ): (
     <div className="px-5 py-3 w-full  flex-col lg:flex-row  justify-center items-start flex ">
       <div className="h-full lg:w-2/3 w-full flex flex-col justify-start items-center   ">
-        <div className="w-full flex items-center p-5 justify-center">
+        <div className="w-full flex items-center p-5 justify-center">          
           <StorageStats
             used={dashboardData?.usedSpace || '1.00 MB'}
             total={dashboardData?.totalSpace || '1 GB'}

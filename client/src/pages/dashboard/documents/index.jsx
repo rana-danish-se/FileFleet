@@ -1,51 +1,47 @@
 import { AppContext } from '@/context/AppContext';
-import { apiClient } from '@/utils/apiClient';
-import { GET_DOCUMENTS_ROUTE } from '@/utils/constants';
 import React, { useContext, useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import File from '@/components/File'; 
+import File from '@/components/File';
 import Header from '@/components/Header';
+import loader from '@/assets/assets/icons/loader.svg';
 
 const Documents = () => {
-  const { token } = useContext(AppContext);
-  const [documents, setDocuments] = useState(null);
-  const [setsize, setSetsize] = useState(null);
+  const { documents, getDocs, docsSize } = useContext(AppContext);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    const getDocs = async () => {
-      try {
-        const res = await apiClient.get(GET_DOCUMENTS_ROUTE, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.status === 200) {
-          console.log(res.data);
-          setDocuments(res.data.files);
-          setSetsize(res.data.totalSize);
-        }
-      } catch (error) {
-        toast.error('Failed to fetch documents');
-      }
+    const fetchDocs = async () => {
+      setLoading(true);
+      document.title = 'Documents - FileFleet';
+      await getDocs();
+      setLoading(false);
     };
-    document.title = 'Documents - FileFleet';
-    getDocs();
+    fetchDocs();
   }, []);
-  return (
+
+  return loading || !documents ? (
+    <div className="w-full h-screen flex items-center justify-center">
+      <img src={loader} alt="Loading..." />
+    </div>
+  ) : (
     <div className="w-full p-5 overflow-scroll">
-      <Header category="Documents" size={setsize} />
-      {/* Displaying the documents */}
-      <div className="w-full mt-10 flex flex-wrap justify-center  gap-6">{
-        documents?.map((doc,index)=>(
-          <File
-            key={index}
-            name={doc.name}
-            createdAt={doc.createdAt}
-            type={doc.type}
-            size={doc.size}
-            imageUrl={null}/>
-        ))
-        
-        }</div>
+      <Header category="Documents" size={docsSize} />
+
+      <div className="w-full mt-10 flex flex-wrap justify-center gap-6">
+        {documents.length === 0 ? (
+          <p className="text-gray-500">No documents found.</p>
+        ) : (
+          documents.map((doc, index) => (
+            <File
+              key={index}
+              name={doc.name}
+              createdAt={doc.createdAt}
+              type={doc.type}
+              size={doc.size}
+              imageUrl={null}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 };

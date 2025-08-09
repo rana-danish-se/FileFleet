@@ -1,40 +1,40 @@
 import File from '@/components/File';
 import Header from '@/components/Header';
 import { AppContext } from '@/context/AppContext';
-import { apiClient } from '@/utils/apiClient';
-import { 
-   GET_OTHERS_ROUTE } from '@/utils/constants';
+import loader from '@/assets/assets/icons/loader.svg';
 import React, { useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const Others = () => {
-  const { token } = useContext(AppContext);
-  const [others, setOthers] = useState(null);
-  const [size, setSize] = useState(null);
+  const { others, othersSize, getOthers } = useContext(AppContext);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    const getDocs = async () => {
+    const fetchOthers = async () => {
       try {
-        const res = await apiClient.get(GET_OTHERS_ROUTE, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.status === 200) {
-          console.log(res.data);
-          setOthers(res.data.files);
-          setSize(res.data.totalSize);
-        }
+        setLoading(true);
+        await getOthers();
+        setLoading(false);
       } catch (error) {
-        toast.error('Failed to fetch documents');
+        console.error('Error fetching others:', error);
+        toast.error('Failed to fetch others');
       }
     };
+
     document.title = 'Others - FileFleet';
-    getDocs();
+    fetchOthers();
   }, []);
-  return (
+  return loading || !others ? (
+    <div className="flex justify-center items-center h-screen">
+      <img src={loader} alt="Loading..." />
+    </div>
+  ) : (
     <div className="w-full p-5 overflow-scroll">
-      <Header category="Others" size={size} />
+      <Header category="Others" size={othersSize} />
       <div className="w-full mt-10 flex flex-wrap justify-center  gap-6">
+        {others.length === 0 && (
+          <p className="text-gray-500">No files found in this category.</p>
+        )}
         {others?.map((other, index) => (
           <File
             key={index}
