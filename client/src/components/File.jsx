@@ -154,7 +154,11 @@ const File = ({
             {showMenu && (
               <div className="bg-gray-900   w-[150px] items-start justify-start   flex flex-col gap-2 absolute top-2 right-6">
                 <div
-                  onClick={() => openFile(fileUrl ? fileUrl : imageUrl, type)}
+                  onClick={() => {
+                    imageUrl
+                      ? setShowImage(true)
+                      : openFile(fileUrl ? fileUrl : imageUrl, type);
+                  }}
                   className="flex gap-4 w-full p-3 justify-center items-start  cursor-pointer hover:bg-gray-800 transition-all duration-300"
                 >
                   <FolderOpen className="w-4 h-5" />
@@ -273,7 +277,10 @@ const File = ({
             <div className="flex gap-4 mb-5">
               <button className="bg-gray-800 p-3 rounded hover:bg-gray-900 transition cursor-pointer">
                 <Download
-                  onClick={() =>{ handleDownload(fileUrl, name); setShowImage(false)}}
+                  onClick={() => {
+                    handleDownload(fileUrl, name);
+                    setShowImage(false);
+                  }}
                   size={24}
                   className="text-white"
                 />
