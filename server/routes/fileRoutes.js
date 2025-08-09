@@ -6,6 +6,8 @@ import {
   getImagesController,
   getVideosAudiosController,
   getOthersController,
+  renameFile,
+  deleteFile,
 } from '../controllers/fileController.js';
 
 import upload from '../middlewares/multer.js';
@@ -47,5 +49,7 @@ fileRouter.get('/documents', verifyToken, getDocumentsController);
 fileRouter.get('/images', verifyToken, getImagesController);
 fileRouter.get('/media', verifyToken, getVideosAudiosController);
 fileRouter.get('/others', verifyToken, getOthersController);
+fileRouter.post('/rename-file',verifyToken,renameFile);
+fileRouter.post('/delete-file',verifyToken,deleteFile)
 
 export default fileRouter;

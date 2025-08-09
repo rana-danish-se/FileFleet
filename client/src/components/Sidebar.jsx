@@ -97,7 +97,7 @@ const Sidebar = () => {
                       ${
                         isActive
                           ? 'bg-gray-800 text-white font-semibold'
-                          : 'text-gray-700 hover:text-white hover:bg-gray-700'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-700'
                       }`}
                     onClick={handleMenuClick}
                   >

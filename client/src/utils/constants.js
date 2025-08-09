@@ -19,6 +19,8 @@ export const GET_DOCUMENTS_ROUTE=`${FILES_ROUTE}/documents`;
 export const GET_IMAGES_ROUTE=`${FILES_ROUTE}/images`;
 export const GET_MEDIA_ROUTE=`${FILES_ROUTE}/media`;
 export const GET_OTHERS_ROUTE=`${FILES_ROUTE}/others`;
+export const RENAME_FILE_ROUTE=`${FILES_ROUTE}/rename-file`
+export const DELETE_FILE_ROUTE=`${FILES_ROUTE}/delete-file`
 
 
 

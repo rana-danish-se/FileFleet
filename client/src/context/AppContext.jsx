@@ -1,9 +1,11 @@
 import { apiClient } from '@/utils/apiClient';
 import {
+  DELETE_FILE_ROUTE,
   GET_DOCUMENTS_ROUTE,
   GET_IMAGES_ROUTE,
   GET_MEDIA_ROUTE,
   GET_OTHERS_ROUTE,
+  RENAME_FILE_ROUTE,
   VERIFY_OTP_ROUTE,
 } from '@/utils/constants';
 import { createContext, useEffect, useState } from 'react';
@@ -123,7 +125,7 @@ const AppContextProvider = ({ children }) => {
         navigate('/auth');
       }
     } catch (error) {
-       toast.error(error.res.data.message || 'Failed to fetch dashboard data');
+      toast.error(error.res.data.message || 'Failed to fetch dashboard data');
       navigate('/auth');
       console.error('Dashboard data fetch error:', error);
     }
@@ -137,7 +139,6 @@ const AppContextProvider = ({ children }) => {
         },
       });
       if (res.status === 200) {
-        console.log(res.data);
         setDocuments(res.data.files);
         setDocsSize(res.data.totalSize);
       }
@@ -194,6 +195,48 @@ const AppContextProvider = ({ children }) => {
     }
   };
 
+  const renameFile = async (fileId, newName) => {
+    try {
+      const res = await apiClient.post(
+        RENAME_FILE_ROUTE,
+        { fileId, newName },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (res.status === 200) {
+        toast.success(res.data.message);
+        refreshData();
+      } else {
+        toast.error(res.data.message);
+      }
+    } catch (error) {
+      toast.error(error.res.data.message);
+    }
+  };
+  const deleteFile=async(fileId)=>{
+     try {
+      const res = await apiClient.post(
+        DELETE_FILE_ROUTE,
+        { fileId},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (res.status === 200) {
+        toast.success(res.data.message);
+        refreshData();
+      } else {
+        toast.error(res.data.message);
+      }
+    } catch (error) {
+      toast.error(error.res.data.message);
+    }
+  }
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
 
@@ -245,6 +288,8 @@ const AppContextProvider = ({ children }) => {
     getOthers,
     others,
     othersSize,
+    renameFile,
+    deleteFile
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

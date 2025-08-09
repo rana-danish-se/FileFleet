@@ -1,10 +1,13 @@
 import File from '../models/FileModel.js';
 import getCategory from '../utils/getCategory.js';
 import User from '../models/UserModel.js';
-import { formatBytesToGB, formatBytesToMB, MAX_STORAGE_BYTES } from '../configs/constants.js';
-import { format } from 'date-fns'; 
+import {
+  formatBytesToGB,
+  formatBytesToMB,
+  MAX_STORAGE_BYTES,
+} from '../configs/constants.js';
+import { format } from 'date-fns';
 import { getFilesByCategory } from '../utils/fileHelpers.js';
-
 
 export const uploadFilesController = async (req, res) => {
   try {
@@ -68,9 +71,92 @@ export const uploadFilesController = async (req, res) => {
   }
 };
 
+export const renameFile = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { fileId, newName } = req.body;
 
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No user found',
+      });
+    }
 
+    const file = await File.findById(fileId);
+    if (!file) {
+      return res.status(404).json({
+        success: false,
+        message: 'No file found',
+      });
+    }
 
+    // Extract extension safely
+    const parts = file.name.split('.');
+    const extension = parts.length > 1 ? parts.pop() : '';
+
+    // Create new filename with same extension
+    const updatedName = extension ? `${newName}.${extension}` : newName;
+
+    file.name = updatedName;
+    await file.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'File name updated successfully',
+      newFileName: updatedName,
+    });
+  } catch (error) {
+    console.error('Rename Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong during file rename',
+    });
+  }
+};
+
+export const deleteFile = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { fileId } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No user found',
+      });
+    }
+
+    const file = await File.findById(fileId);
+    if (!file) {
+      return res.status(404).json({
+        success: false,
+        message: 'File not found',
+      });
+    }
+
+    // OPTIONAL: Remove from storage if needed
+    // Example: If using local storage
+    // import fs from 'fs';
+    // fs.unlinkSync(file.path);
+     user.usedStorage=user.usedStorage-file.size;
+     await user.save();
+    await File.findByIdAndDelete(fileId);
+
+    res.status(200).json({
+      success: true,
+      message: "File deleted successfully",
+    });
+  } catch (error) {
+    console.error('Delete Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong during file deletion',
+    });
+  }
+};
 
 
 export const getStorageSummaryController = async (req, res) => {
@@ -78,7 +164,10 @@ export const getStorageSummaryController = async (req, res) => {
     const userId = req.userId;
 
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({success:false, message: 'User not found' });
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: 'User not found' });
 
     const files = await File.find({ owner: userId }).sort({ createdAt: -1 });
 
@@ -100,16 +189,20 @@ export const getStorageSummaryController = async (req, res) => {
 
       if (category === 'document') {
         summary.documents.size += file.size;
-        if (!summary.documents.lastUpdated) summary.documents.lastUpdated = lastUpdated;
+        if (!summary.documents.lastUpdated)
+          summary.documents.lastUpdated = lastUpdated;
       } else if (category === 'image') {
         summary.images.size += file.size;
-        if (!summary.images.lastUpdated) summary.images.lastUpdated = lastUpdated;
+        if (!summary.images.lastUpdated)
+          summary.images.lastUpdated = lastUpdated;
       } else if (category === 'video' || category === 'audio') {
         summary.videos_audios.size += file.size;
-        if (!summary.videos_audios.lastUpdated) summary.videos_audios.lastUpdated = lastUpdated;
+        if (!summary.videos_audios.lastUpdated)
+          summary.videos_audios.lastUpdated = lastUpdated;
       } else {
         summary.others.size += file.size;
-        if (!summary.others.lastUpdated) summary.others.lastUpdated = lastUpdated;
+        if (!summary.others.lastUpdated)
+          summary.others.lastUpdated = lastUpdated;
       }
     }
 
@@ -119,22 +212,25 @@ export const getStorageSummaryController = async (req, res) => {
     summary.videos_audios.size = formatBytesToMB(summary.videos_audios.size);
     summary.others.size = formatBytesToMB(summary.others.size);
 
-    res.status(200).json({success:true,summary});
+    res.status(200).json({ success: true, summary });
   } catch (error) {
     console.error('Dashboard summary error:', error);
     res.status(500).json({ message: 'Failed to fetch storage summary' });
   }
 };
 
-
-
 export const getDocumentsController = async (req, res) => {
   try {
-    const { files, totalSize } = await getFilesByCategory(req.userId, 'document');
+    const { files, totalSize } = await getFilesByCategory(
+      req.userId,
+      'document'
+    );
     res.status(200).json({ success: true, files, totalSize });
   } catch (error) {
     console.error('Error fetching documents:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch documents' });
+    res
+      .status(500)
+      .json({ success: false, message: 'Failed to fetch documents' });
   }
 };
 
@@ -150,11 +246,16 @@ export const getImagesController = async (req, res) => {
 
 export const getVideosAudiosController = async (req, res) => {
   try {
-    const { files, totalSize } = await getFilesByCategory(req.userId, ['video', 'audio']);
+    const { files, totalSize } = await getFilesByCategory(req.userId, [
+      'video',
+      'audio',
+    ]);
     res.status(200).json({ success: true, files, totalSize });
   } catch (error) {
     console.error('Error fetching videos/audios:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch videos and audios' });
+    res
+      .status(500)
+      .json({ success: false, message: 'Failed to fetch videos and audios' });
   }
 };
 
@@ -172,6 +273,8 @@ export const getOthersController = async (req, res) => {
     res.status(200).json({ success: true, files, totalSize });
   } catch (error) {
     console.error('Error fetching others:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch other files' });
+    res
+      .status(500)
+      .json({ success: false, message: 'Failed to fetch other files' });
   }
 };

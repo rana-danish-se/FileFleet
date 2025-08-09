@@ -1,14 +1,14 @@
 import dots from '@/assets/assets/icons/dots.svg';
 import close from '@/assets/assets/icons/close.svg';
-import share from '@/assets/assets/icons/share.svg';
 import remove from '@/assets/assets/icons/delete.svg';
 import edit from '@/assets/assets/icons/edit.svg';
 import { FolderOpen } from 'lucide-react';
 import download from '@/assets/assets/icons/download.svg';
+import { Download, X } from 'lucide-react';
+
 import { convertFileSize, formatDateTime, getFileIcon } from '@/utils/helpers';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { mimeToExt } from '@/utils/helpers.js';
-import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -17,10 +17,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { AppContext } from '@/context/AppContext';
 
-const File = ({ name, createdAt, type, size, imageUrl, category, fileUrl }) => {
+const File = ({
+  fileId,
+  name,
+  createdAt,
+  type,
+  size,
+  imageUrl,
+  category,
+  fileUrl,
+}) => {
+  const { renameFile, deleteFile } = useContext(AppContext);
   const [showMenu, setshowMenu] = useState(false);
+  const [showDelete, setshowDelete] = useState(false);
   const [showRename, setshowRename] = useState(false);
+  const [loading, setloading] = useState(false);
+  const [newName, setnewName] = useState('');
+  const [showImage, setShowImage] = useState(false);
   const openFile = (url, mimeType) => {
     const ext = mimeToExt[mimeType] || 'unknown';
 
@@ -69,38 +84,36 @@ const File = ({ name, createdAt, type, size, imageUrl, category, fileUrl }) => {
         a.click();
     }
   };
-  const handleDownload = async (fileUrl, fileName) => {
-    try {
-      // Show a toast or loader
-      toast.info('Downloading...');
-
-      // Fetch file as a blob
-      const response = await fetch(fileUrl, { mode: 'cors' });
-      if (!response.ok) throw new Error('Failed to download file');
-
-      const blob = await response.blob();
-
-      // Create a temporary link element
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = fileName || 'downloaded-file';
-      document.body.appendChild(link);
-      link.click();
-
-      // Cleanup
-      document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
-
-      toast.success('Download complete ✅');
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to download file ❌');
-    }
+  const handleDownload = (fileUrl, fileName) => {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.setAttribute('download', fileName || '');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  const handleRename=()=>{
+  const rename = async (newName) => {
+    setloading(true);
+    await renameFile(fileId, newName);
+    setloading(false);
+    setshowRename(false);
+  };
+  const deleteIt = async () => {
+    setloading(true);
+    await deleteFile(fileId, newName);
+    setloading(false);
+    setshowDelete(false);
+  };
+
+  const handleRename = () => {
+    setshowMenu(false);
     setshowRename(true);
-  }
+  };
+  const hanldeDelete = () => {
+    setshowMenu(false);
+    setshowDelete(true);
+  };
 
   return (
     <>
@@ -115,7 +128,8 @@ const File = ({ name, createdAt, type, size, imageUrl, category, fileUrl }) => {
           ) : (
             <img
               src={imageUrl}
-              className="w-16 h-16 rounded-full object-cover"
+              onClick={() => setShowImage(true)}
+              className="w-16 h-16 rounded-full object-cover cursor-pointer"
               alt=""
             />
           )}
@@ -148,22 +162,22 @@ const File = ({ name, createdAt, type, size, imageUrl, category, fileUrl }) => {
                     Open
                   </p>
                 </div>
-                <div onClick={()=>handleRename()} className="flex gap-2 p-3 justify-center items-center  w-full cursor-pointer hover:bg-gray-800 transition-all duration-300">
+                <div
+                  onClick={() => handleRename()}
+                  className="flex gap-2 p-3 justify-center items-center  w-full cursor-pointer hover:bg-gray-800 transition-all duration-300"
+                >
                   <img src={edit} className="w-6 h-6" alt="" />
                   <p className="  cursor-pointer  hover:bg-gray-800 transition-all duration-300">
                     Rename
                   </p>
                 </div>
-                <div className="flex w-full gap-2 p-3 justify-center items-center cursor-pointer hover:bg-gray-800 transition-all duration-300">
+                <div
+                  onClick={() => hanldeDelete()}
+                  className="flex w-full gap-2 p-3 justify-center items-center cursor-pointer hover:bg-gray-800 transition-all duration-300"
+                >
                   <img src={remove} className="w-6 h-6" alt="" />
                   <p className="  cursor-pointer  hover:bg-gray-800 transition-all duration-300">
                     Delete
-                  </p>
-                </div>
-                <div className="flex w-full gap-2 p-3 justify-center items-center cursor-pointer hover:bg-gray-800 transition-all duration-300">
-                  <img src={share} className="w-6 h-6" alt="" />
-                  <p className="  cursor-pointer  hover:bg-gray-800 transition-all duration-300">
-                    Share
                   </p>
                 </div>
                 <div
@@ -190,26 +204,88 @@ const File = ({ name, createdAt, type, size, imageUrl, category, fileUrl }) => {
       {showRename && (
         <div className="fixed inset-0 bg-gray-700/10  flex justify-center items-center z-50">
           <div className="rounded-xl shadow-2xl p-6 w-full sm:w-[200px]">
-<Dialog open={showRename} onOpenChange={setshowRename}>
-  <DialogContent
-    className="bg-gray-700 text-white w-[400px] p-6 rounded-xl shadow-2xl"
-  >
-    <DialogHeader>
-      <DialogTitle className="text-center text-xl">Rename</DialogTitle>
-      <DialogDescription>
-        <input
-          placeholder="Enter new name"
-          type="text"
-          className="bg-gray-800 text-white outline-none mt-10 p-3 w-full rounded-full"
-        />
-        <button className="w-full text-sm text-white cursor-pointer bg-gray-900 mt-5 p-3 rounded-md">
-          Rename
-        </button>
-      </DialogDescription>
-    </DialogHeader>
-  </DialogContent>
-</Dialog>
-
+            <Dialog open={showRename} onOpenChange={setshowRename}>
+              <DialogContent className="bg-gray-700 text-white w-[400px] p-6 rounded-xl shadow-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-center text-xl">
+                    Rename
+                  </DialogTitle>
+                  <DialogDescription>
+                    <input
+                      placeholder="Enter new name"
+                      type="text"
+                      value={newName}
+                      onChange={(e) => setnewName(e.target.value)}
+                      className="bg-gray-800 text-white outline-none mt-10 p-3 w-full rounded-full"
+                    />
+                    <button
+                      onClick={() => rename(newName)}
+                      className="w-full text-sm text-white cursor-pointer bg-gray-900 mt-5 p-3 rounded-md"
+                    >
+                      {loading ? 'Renaming ....' : 'Rename'}
+                    </button>
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      )}
+      {showDelete && (
+        <div className="fixed inset-0 bg-gray-700/10  flex justify-center items-center z-50">
+          <div className="rounded-xl shadow-2xl p-6 w-full sm:w-[200px]">
+            <Dialog open={showDelete} onOpenChange={setshowDelete}>
+              <DialogContent className="bg-gray-700 text-white w-[400px] p-6 rounded-xl shadow-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-center text-xl">
+                    Delete File
+                  </DialogTitle>
+                  <DialogDescription>
+                    <p className="text-center text-white text-lg">
+                      Are you sure to delete {name}
+                    </p>
+                    <div className="flex justify-center gap-4 items-center">
+                      <button
+                        onClick={() => deleteIt()}
+                        className="w-1/3 text-sm text-white cursor-pointer bg-red-400 mt-5 p-3 rounded-md"
+                      >
+                        {loading ? 'Removing ....' : 'Delete'}
+                      </button>
+                      {!loading && (
+                        <button
+                          onClick={() => setshowDelete(false)}
+                          className="w-1/3 text-sm text-black cursor-pointer bg-white mt-5 p-3 rounded-md"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      )}
+      {showImage && (
+        <div className="fixed inset-0 bg-black/50  flex justify-center items-center z-50">
+          <div className="rounded-xl shadow-2xl p-6 w-full flex flex-col items-center justify-center">
+            <div className="flex gap-4 mb-5">
+              <button className="bg-gray-800 p-3 rounded hover:bg-gray-900 transition cursor-pointer">
+                <Download
+                  onClick={() =>{ handleDownload(fileUrl, name); setShowImage(false)}}
+                  size={24}
+                  className="text-white"
+                />
+              </button>
+              <button
+                onClick={() => setShowImage(false)}
+                className="bg-gray-800 p-3 rounded hover:bg-gray-900 transition cursor-pointer"
+              >
+                <X size={24} className="text-white" />
+              </button>
+            </div>
+            <img src={imageUrl} alt="" className=" w-[300px] h-[300px]" />
           </div>
         </div>
       )}

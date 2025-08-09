@@ -10,6 +10,7 @@ import fileImage from '@/assets/assets/icons/file-image.svg?url';
 import fileVideo from '@/assets/assets/icons/file-video.svg?url';
 import fileAudio from '@/assets/assets/icons/file-audio.svg?url';
 import fileOther from '@/assets/assets/icons/file-other.svg?url';
+import fileSvg from "@/assets/assets/icons/file-svg.svg"
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -149,13 +150,13 @@ export const mimeToExt = {
 export const getFileIcon = (extension, type) => {
   // Normalize MIME types to extensions
   if (extension && extension.includes('/')) {
-    console.log(extension);
     extension = mimeToExt[extension] || '';
   }
 
   // If still not matched and looks like MIME without slash, try mapping
   if (!extension && mimeToExt[type]) {
     extension = mimeToExt[type];
+
   }
   if (type && type.includes('.')) {
     type = type.split('.').pop().toLowerCase();
@@ -175,7 +176,7 @@ export const getFileIcon = (extension, type) => {
     case 'xlsx':
       return fileDocument;
     case 'svg':
-      return fileImage;
+      return fileSvg;
     case 'mkv':
     case 'mov':
     case 'avi':
@@ -213,63 +214,4 @@ export const getFileIcon = (extension, type) => {
   }
 };
 
-// Appwrite URLs
-export const constructFileUrl = (bucketFileId) => {
-  return `${process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT}/storage/buckets/${process.env.NEXT_PUBLIC_APPWRITE_BUCKET}/files/${bucketFileId}/view?project=${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`;
-};
 
-export const constructDownloadUrl = (bucketFileId) => {
-  return `${process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT}/storage/buckets/${process.env.NEXT_PUBLIC_APPWRITE_BUCKET}/files/${bucketFileId}/download?project=${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`;
-};
-
-// Dashboard
-export const getUsageSummary = (totalSpace) => {
-  return [
-    {
-      title: 'Documents',
-      size: totalSpace.document.size,
-      latestDate: totalSpace.document.latestDate,
-      icon: '/assets/icons/file-document-light.svg',
-      url: '/documents',
-    },
-    {
-      title: 'Images',
-      size: totalSpace.image.size,
-      latestDate: totalSpace.image.latestDate,
-      icon: '/assets/icons/file-image-light.svg',
-      url: '/images',
-    },
-    {
-      title: 'Media',
-      size: totalSpace.video.size + totalSpace.audio.size,
-      latestDate:
-        totalSpace.video.latestDate > totalSpace.audio.latestDate
-          ? totalSpace.video.latestDate
-          : totalSpace.audio.latestDate,
-      icon: '/assets/icons/file-video-light.svg',
-      url: '/media',
-    },
-    {
-      title: 'Others',
-      size: totalSpace.other.size,
-      latestDate: totalSpace.other.latestDate,
-      icon: '/assets/icons/file-other-light.svg',
-      url: '/others',
-    },
-  ];
-};
-
-export const getFileTypesParams = (type) => {
-  switch (type) {
-    case 'documents':
-      return ['document'];
-    case 'images':
-      return ['image'];
-    case 'media':
-      return ['video', 'audio'];
-    case 'others':
-      return ['other'];
-    default:
-      return ['document'];
-  }
-};
