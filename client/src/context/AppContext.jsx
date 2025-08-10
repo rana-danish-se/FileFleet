@@ -42,58 +42,94 @@ const AppContextProvider = ({ children }) => {
     return (totalBytes / (1024 * 1024)).toFixed(2);
   };
 
-  const handleFileChange = async (event) => {
-    const files = event.target.files;
-    if (!files.length) return;
+const handleFileChange = async (event) => {
+  const files = event.target.files;
+  if (!files.length) return;
 
-    const totalSizeMB = getTotalSizeMB(files);
-    const toastId = toast(
-      `Uploading ${files.length} files (0%) of ${totalSizeMB} MB...`,
-      {
-        duration: Infinity,
-      }
-    );
-
-    const formData = new FormData();
-    for (const file of files) {
-      formData.append('files', file);
+  const maxFileSize = 100 * 1024 * 1024; 
+  const invalidFiles = [];
+  
+  for (const file of files) {
+    if (file.size > maxFileSize) {
+      invalidFiles.push(`${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
     }
+  }
 
-    try {
-      const response = await apiClient.post(UPLOAD_FILES_ROUTE, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
-        },
-        onUploadProgress: (progressEvent) => {
-          const { loaded, total } = progressEvent;
-          const percent = Math.floor((loaded / total) * 100);
-          toast.message(`Uploading ${files.length} files (${percent}%)...`, {
-            id: toastId,
-          });
-        },
+  if (invalidFiles.length > 0) {
+    toast.error(`Files too large (max 100MB): ${invalidFiles.join(', ')}`, {
+      duration: 5000,
+    });
+    return;
+  }
+
+  const totalSizeMB = getTotalSizeMB(files);
+  const toastId = toast(
+    `Uploading ${files.length} files (0%) of ${totalSizeMB} MB...`,
+    {
+      duration: Infinity,
+    }
+  );
+
+  const formData = new FormData();
+  for (const file of files) {
+    formData.append('files', file);
+  }
+
+  try {
+    const response = await apiClient.post(UPLOAD_FILES_ROUTE, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`,
+      },
+      onUploadProgress: (progressEvent) => {
+        const { loaded, total } = progressEvent;
+        const percent = Math.floor((loaded / total) * 100);
+        toast.message(`Uploading ${files.length} files (${percent}%)...`, {
+          id: toastId,
+        });
+      },
+      timeout: 300000, 
+    });
+
+    if (response.status === 200) {
+      // Enhanced success message with file details
+      const uploadedCount = response.data.files?.length || files.length;
+      toast.success(`${uploadedCount} files uploaded successfully ✅`, {
+        id: toastId,
+        duration: 3000,
       });
-
-      if (response.status === 200) {
-        toast.success('Files uploaded successfully ✅', {
-          id: toastId,
-          duration: 2000,
-        });
-        refreshData();
-      } else {
-        toast.error(response.data.message || 'Failed to upload files ❌', {
-          id: toastId,
-          duration: 5000,
-        });
-      }
-    } catch (error) {
-      console.error('Upload failed:', error);
-      toast.error(error.response?.data?.message || 'Upload failed ❌', {
+      
+      // Log uploaded files for debugging
+      console.log('Successfully uploaded files:', response.data.files);
+      
+      refreshData();
+      event.target.value = '';
+    } else {
+      toast.error(response.data.message || 'Failed to upload files ❌', {
         id: toastId,
         duration: 5000,
       });
     }
-  };
+  } catch (error) {
+    console.error('Upload failed:', error);
+    let errorMessage = 'Upload failed ❌';
+    
+    if (error.code === 'ECONNABORTED') {
+      errorMessage = 'Upload timeout - files too large or slow connection ❌';
+    } else if (error.response?.status === 413) {
+      errorMessage = 'File too large (max 100MB per file) ❌';
+    } else if (error.response?.status === 400) {
+      errorMessage = error.response.data.message || 'Invalid files or storage limit exceeded ❌';
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message + ' ❌';
+    }
+    
+    toast.error(errorMessage, {
+      id: toastId,
+      duration: 5000,
+    });
+  }
+};
 
   const verifyOTP = async (otp, userId) => {
     try {

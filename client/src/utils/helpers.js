@@ -10,7 +10,8 @@ import fileImage from '@/assets/assets/icons/file-image.svg?url';
 import fileVideo from '@/assets/assets/icons/file-video.svg?url';
 import fileAudio from '@/assets/assets/icons/file-audio.svg?url';
 import fileOther from '@/assets/assets/icons/file-other.svg?url';
-import fileSvg from "@/assets/assets/icons/file-svg.svg"
+import fileSvg from '@/assets/assets/icons/file-svg.svg';
+import filePPt from '@/assets/assets/icons/file-ppt.png';
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -121,18 +122,26 @@ export const mimeToExt = {
   'application/msword': 'doc',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
     'docx',
-  'text/csv': 'csv',
-  'text/plain': 'txt',
+  'application/vnd.ms-powerpoint': 'ppt',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+    'pptx',
   'application/vnd.ms-excel': 'xls',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+ 
+
+  'text/csv': 'csv',
+  'text/plain': 'txt',
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
   'image/svg+xml': 'svg',
+  'image/gif': 'gif',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
   'video/x-matroska': 'mkv',
   'video/quicktime': 'mov',
   'video/x-msvideo': 'avi',
   'video/x-ms-wmv': 'wmv',
-  'video/mp4': 'mp4',
   'video/x-flv': 'flv',
-  'video/webm': 'webm',
   'video/x-m4v': 'm4v',
   'video/3gpp': '3gp',
   'audio/mpeg': 'mp3',
@@ -156,7 +165,6 @@ export const getFileIcon = (extension, type) => {
   // If still not matched and looks like MIME without slash, try mapping
   if (!extension && mimeToExt[type]) {
     extension = mimeToExt[type];
-
   }
   if (type && type.includes('.')) {
     type = type.split('.').pop().toLowerCase();
@@ -164,6 +172,10 @@ export const getFileIcon = (extension, type) => {
   switch (extension) {
     case 'pdf':
       return filePdf;
+    case 'ppt':
+      return filePPt;
+    case 'pptx':
+      return filePPt;
     case 'doc':
       return fileDoc;
     case 'docx':
@@ -213,5 +225,3 @@ export const getFileIcon = (extension, type) => {
       }
   }
 };
-
-

@@ -24,8 +24,8 @@ const Images = () => {
     };
 
     document.title = 'Images - FileFleet';
-    console.log(images);
     fetchData();
+    console.log(images);
   }, []);
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -61,13 +61,19 @@ const Images = () => {
         )}
         {filteredResults?.map((image, index) => (
           <File
-            key={index}
-            name={image.name}
-            createdAt={image.createdAt}
-            type={image.type}
-            size={image.size}
-            imageUrl={image.url}
-            fileId={image._id}
+             key={index}
+              name={image.name}
+              originalName={image.originalName}
+              publicId={image.publicId}
+              extension={image.extension}
+              createdAt={image.createdAt}
+              type={image.type}
+              size={image.size}
+              fileUrl={image.url}
+              imageUrl={image.type.startsWith("image")?image.url:null}
+              fileId={image._id}
+              category={image.category}
+              resourceType={image.resourceType}
           />
         ))}
       </div>

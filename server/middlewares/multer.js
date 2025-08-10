@@ -1,34 +1,58 @@
 // utils/multer.js
 import multer from 'multer';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import cloudinary from "../configs/cloudinary.js";
+import cloudinary from '../configs/cloudinary.js';
+import path from 'path';
+
+const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'];
+const videoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'wmv', 'flv', '3gp'];
+const docExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'rtf'];
+const codeExtensions = ['js', 'py', 'java', 'cpp', 'html', 'css', 'json', 'xml'];
 
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: async (req, file) => {
-    // Detect SVGs or text-based files and upload them as raw
-    if (
-      file.mimetype === 'image/svg+xml' ||
-      file.mimetype.startsWith('text/')
-    ) {
+  params: (req, file) => {
+    const ext = path.extname(file.originalname).toLowerCase().slice(1); // Remove the dot
+    const baseName = path.basename(file.originalname, path.extname(file.originalname));
+    
+    // Generate unique filename
+    const uniqueName = `${Date.now()}_${baseName}`;
+
+    // Images - can be displayed directly
+    if (imageExtensions.includes(ext)) {
       return {
-        folder: 'filefleet',
-        resource_type: 'raw', // Avoid image processing, keep file as-is
-        format: file.originalname.split('.').pop(), // Preserve extension
+        folder: 'filefleet/images',
+        resource_type: 'image',
+        public_id: uniqueName,
+        format: ext === 'svg' ? 'svg' : ext, // SVGs need special handling
       };
     }
 
-    // For other files, auto works fine
+    // Videos - can be streamed
+    if (videoExtensions.includes(ext)) {
+      return {
+        folder: 'filefleet/videos',
+        resource_type: 'video',
+        public_id: uniqueName,
+        format: ext,
+      };
+    }
+
+    // Documents, code files, and everything else - use raw
     return {
-      folder: 'filefleet',
-      resource_type: 'auto',
+      folder: 'filefleet/documents',
+      resource_type: 'raw',
+      public_id: uniqueName,
+      format: ext,
+      // This is crucial for downloads
+      flags: 'attachment',
     };
   },
 });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
 });
 
 export default upload;

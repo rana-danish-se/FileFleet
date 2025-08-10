@@ -1,6 +1,7 @@
 import File from '../models/FileModel.js';
 import getCategory from '../utils/getCategory.js';
 import User from '../models/UserModel.js';
+import path from 'path';
 import {
   formatBytesToGB,
   formatBytesToMB,
@@ -8,20 +9,26 @@ import {
 } from '../configs/constants.js';
 import { format } from 'date-fns';
 import { getFilesByCategory } from '../utils/fileHelpers.js';
+import getResourceType from '../utils/getResourceType.js';
+import cloudinary from '../configs/cloudinary.js';
 
 export const uploadFilesController = async (req, res) => {
   try {
     const files = req.files;
 
     if (!files || files.length === 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'No files uploaded' });
+      return res.status(400).json({
+        success: false,
+        message: 'No files uploaded',
+      });
     }
 
     const user = await User.findById(req.userId);
     if (!user)
-      return res.status(404).json({ sucess: false, message: 'User not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
 
     const totalUploadSize = files.reduce((acc, file) => acc + file.size, 0);
     const projectedUsage = user.usedStorage + totalUploadSize;
@@ -42,21 +49,28 @@ export const uploadFilesController = async (req, res) => {
           message: `File "${file.originalname}" exceeds 100MB limit.`,
         });
       }
+
+      const extension = path.extname(file.originalname).toLowerCase();
       const category = getCategory(file.mimetype);
+      const resourceType = getResourceType(file.mimetype, extension);
+
       const newFile = new File({
         name: file.originalname,
+        originalName: file.originalname,
         url: file.path, // Cloudinary URL
+        publicId: file.filename, // Cloudinary public ID
         type: file.mimetype,
+        extension: extension,
         size: file.size,
         category,
+        resourceType,
         owner: req.userId,
       });
 
       await newFile.save();
       uploadedFiles.push(newFile);
     }
-    console.log('Uploaded files:', uploadedFiles);
-    // Update user's usedStorage
+
     user.usedStorage += totalUploadSize;
     await user.save();
 
@@ -67,9 +81,97 @@ export const uploadFilesController = async (req, res) => {
     });
   } catch (error) {
     console.error('Upload Error:', error);
-    res.status(500).json({ message: 'Something went wrong during upload' });
+    res.status(500).json({
+      message: 'Something went wrong during upload',
+    });
   }
 };
+
+ export const getFileAccessController = async (req, res) => {
+  try {
+    const { fileId, action } = req.params; // action: 'download' or 'preview'
+
+    // Validate action parameter
+    if (!['download', 'preview'].includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid action. Use "download" or "preview"'
+      });
+    }
+
+    const file = await File.findById(fileId);
+    if (!file) {
+      return res.status(404).json({
+        success: false,
+        message: 'File not found'
+      });
+    }
+
+    // Check if user owns the file or it's shared with them
+    if (file.owner.toString() !== req.userId && !file.sharedWith.includes(req.userId)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      });
+    }
+
+    let accessUrl = file.url;
+    let canPreview = false;
+
+    // Determine resource type if not stored (for backward compatibility)
+    const resourceType = file.resourceType || getResourceType(file.type, file.extension);
+
+    // Handle different file types
+    if (resourceType === 'raw') {
+      const extension = file.extension ? file.extension.slice(1) : path.extname(file.name).slice(1);
+      const previewableTypes = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'];
+
+      if (action === 'download') {
+        // Force download with original filename
+        accessUrl = `${file.url}?fl_attachment:${encodeURIComponent(file.name)}`;
+      } else if (action === 'preview') {
+        // Try to open in Google Docs viewer for supported formats
+        if (previewableTypes.includes(extension.toLowerCase())) {
+          accessUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(file.url)}&embedded=true`;
+          canPreview = true;
+        } else {
+          // For non-previewable files, provide download link
+          accessUrl = `${file.url}?fl_attachment:${encodeURIComponent(file.name)}`;
+        }
+      }
+    } else if (resourceType === 'image' || resourceType === 'video') {
+      // Images and videos can be previewed directly
+      canPreview = true;
+      if (action === 'download') {
+        // For images/videos, add attachment flag for download
+        accessUrl = `${file.url}?fl_attachment:${encodeURIComponent(file.name)}`;
+      }
+      // For preview, use direct URL
+    }
+
+    res.json({
+      success: true,
+      accessUrl,
+      fileName: file.name,
+      originalName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      canPreview,
+      resourceType,
+      action
+    });
+
+  } catch (error) {
+    console.error('Error generating access URL:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating access URL',
+      error: error.message
+    });
+  }
+};
+
+
 
 export const renameFile = async (req, res) => {
   try {
@@ -141,13 +243,13 @@ export const deleteFile = async (req, res) => {
     // Example: If using local storage
     // import fs from 'fs';
     // fs.unlinkSync(file.path);
-     user.usedStorage=user.usedStorage-file.size;
-     await user.save();
+    user.usedStorage = user.usedStorage - file.size;
+    await user.save();
     await File.findByIdAndDelete(fileId);
 
     res.status(200).json({
       success: true,
-      message: "File deleted successfully",
+      message: 'File deleted successfully',
     });
   } catch (error) {
     console.error('Delete Error:', error);
@@ -157,7 +259,6 @@ export const deleteFile = async (req, res) => {
     });
   }
 };
-
 
 export const getStorageSummaryController = async (req, res) => {
   try {

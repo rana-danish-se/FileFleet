@@ -32,8 +32,8 @@ const Others = () => {
     if (!searchTerm.trim()) {
       setFilteredResults(others);
     } else {
-      const filtered = others.filter((med) =>
-        med.name.toLowerCase().includes(searchTerm.toLowerCase())
+      const filtered = others.filter((other) =>
+        other.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredResults(filtered);
     }
@@ -68,14 +68,18 @@ const Others = () => {
         {filteredResults?.map((other, index) => (
           <File
             key={index}
-            name={other.name}
-            createdAt={other.createdAt}
-            type={other.type}
-            size={other.size}
-            fileUrl={other.url}
-            category={other.category}
-            imageUrl={null}
-            fileId={other._id}
+              name={other.name}
+              originalName={other.originalName}
+              publicId={other.publicId}
+              extension={other.extension}
+              createdAt={other.createdAt}
+              type={other.type}
+              size={other.size}
+              fileUrl={other.url}
+              imageUrl={null}
+              fileId={other._id}
+              category={other.category}
+              resourceType={other.resourceType}
           />
         ))}
       </div>

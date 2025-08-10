@@ -19,6 +19,7 @@ const Documents = () => {
       setLoading(false);
     };
     fetchDocs();
+    console.log(documents)
   }, []);
 
   // Update filtered results when documents or search term changes
@@ -60,12 +61,17 @@ const Documents = () => {
             <File
               key={index}
               name={doc.name}
+              originalName={doc.originalName}
+              publicId={doc.publicId}
+              extension={doc.extension}
               createdAt={doc.createdAt}
               type={doc.type}
               size={doc.size}
               fileUrl={doc.url}
               imageUrl={null}
               fileId={doc._id}
+              category={doc.category}
+              resourceType={doc.resourceType}
             />
           ))
         )}

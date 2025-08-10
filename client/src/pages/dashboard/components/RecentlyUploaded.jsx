@@ -89,10 +89,6 @@ const RecentlyUploaded = ({ recents = [] }) => {
       toast.error('Failed to download file ❌');
     }
   };
-
-  useEffect(()=>{
-console.log(recents)
-  },[])
   if (recents.length === 0) {
     return (
       <p className="text-lg mt-10 uppercase  text-white">No recent uploads</p>

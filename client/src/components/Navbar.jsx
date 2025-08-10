@@ -22,7 +22,6 @@ const Navbar = () => {
 
   return (
     <div className="p-3 sm:ml-13 flex items-center justify-end">
-      
       <div className="flex items-center gap-4 cursor-pointer">
         <button
           onClick={handleUploadButtonClick}

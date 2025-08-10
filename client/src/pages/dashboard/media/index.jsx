@@ -60,15 +60,19 @@ const Media = () => {
         )}
         {filteredResults?.map((med, index) => (
           <File
-            key={index}
-            name={med.name}
-            createdAt={med.createdAt}
-            type={med.type}
-            size={med.size}
-            category={med.category}
-            fileUrl={med.url}
-            imageUrl={null}
-            fileId={med._id}
+             key={index}
+              name={med.name}
+              originalName={med.originalName}
+              publicId={med.publicId}
+              extension={med.extension}
+              createdAt={med.createdAt}
+              type={med.type}
+              size={med.size}
+              fileUrl={med.url}
+              imageUrl={null}
+              fileId={med._id}
+              category={med.category}
+              resourceType={med.resourceType}
           />
         ))}
       </div>
